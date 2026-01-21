@@ -15,7 +15,7 @@ const productModel = new Product()
 const cartModel = new Cart()
 const customer = new Customer()
 
-// ─── Product модель ────────────────────────────────────────
+// Product  
 
 productModel.setItem(apiProducts.items)
 
@@ -27,7 +27,7 @@ console.log('Поиск товара по id:', productModel.getItemByID(example
 productModel.setSelectedItem(apiProducts.items[2])
 console.log('Выбранный товар:', productModel.getSelectedItem())
 
-// ─── Cart модель ───────────────────────────────────────────
+// Cart 
 
 cartModel.addToCart(apiProducts.items[1])
 cartModel.addToCart(apiProducts.items[3])
@@ -61,7 +61,7 @@ cartModel.removeAllItems()
 
 console.log('Корзина после очистки:', cartModel.getItems())
 
-// ─── Customer модель ───────────────────────────────────────
+// Customer 
 
 const customerData1: ICustomer = {
   payment: 'online',
@@ -92,9 +92,8 @@ console.log('Сброс всех данных...')
 customer.eraseCustomerInfo()
 console.log('Текущее состояние:', customer.getCustomerInfo())
 
-// ─── ApiService ────────────────────────────────────────────
+//  ApiService 
 
-// Явно приводим экземпляр базового Api к интерфейсу IApi для типобезопасной композиции
 const apiInstance = new Api(API_URL) as unknown as IApi
 const apiService = new ApiService(apiInstance)
 
