@@ -12,7 +12,6 @@ export class ApiService {
       const data = await this.api.get<{ items: IProduct[] }>('/product')
       return data.items
     } catch (error) {
-      console.log('Ошибка получения данных: ', error)
       return []
     }
   }

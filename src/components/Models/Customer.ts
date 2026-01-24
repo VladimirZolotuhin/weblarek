@@ -1,4 +1,5 @@
 import type { ICustomer } from '../../types'
+import type { IEvents } from '../base/Events'
 
 export class Customer {
   private customerInfo: ICustomer = {
@@ -7,6 +8,8 @@ export class Customer {
     phone: null,
     address: null,
   }
+
+  constructor(protected events: IEvents) {}
 
   setCustomerInfo(customerInfo: Partial<ICustomer>): void {
     if (customerInfo.payment !== undefined) {
@@ -21,6 +24,7 @@ export class Customer {
     if (customerInfo.phone !== undefined) {
       this.customerInfo.phone = customerInfo.phone
     }
+    this.events.emit('customer:changed', this.customerInfo)
   }
 
   getCustomerInfo(): ICustomer {
@@ -34,10 +38,11 @@ export class Customer {
       phone: null,
       address: null,
     }
+    this.events.emit('customer:changed', this.customerInfo)
   }
 
-  isCorrect(): { [key in keyof ICustomer]?: string } {
-    let errors: { [key in keyof ICustomer]?: string } = {}
+  validate(): { [key in keyof ICustomer]?: string } {
+    const errors: { [key in keyof ICustomer]?: string } = {}
     if (!this.customerInfo.payment) {
       errors.payment = 'Не выбран тип оплаты'
     }

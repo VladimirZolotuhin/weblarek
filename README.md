@@ -192,6 +192,8 @@ Presenter - презентер содержит основную логику п
 
 #### Поля
 
+- customerInfo: ICustomer — объект, хранящий персональные данные покупателя (тип оплаты, email, телефон, адрес). Инициализируется значениями `null`.
+
 ```ts
 private customerInfo: ICustomer = {
   payment: null,
@@ -206,7 +208,7 @@ private customerInfo: ICustomer = {
 - setCustomerInfo(customerInfo: Partial<ICustomer>): void — обновляет данные покупателя (поддерживает частичное обновление)
 - getCustomerInfo(): ICustomer — возвращает текущие данные покупателя
 - eraseCustomerInfo(): void — сбрасывает данные к начальному состоянию
-- isCorrect(): { [key in keyof ICustomer]?: string } — проверяет корректность данных и возвращает ошибки
+- validate(): { [key in keyof ICustomer]?: string } — проверяет корректность данных и возвращает ошибки
 
 ---
 
@@ -225,3 +227,308 @@ private customerInfo: ICustomer = {
 
 - async getProducts(): Promise<IProduct[]> — получает каталог товаров. В случае ошибки возвращает пустой массив
 - postOrder(order: IOrder): Promise<IOrderResponse> — отправляет заказ на сервер и возвращает ответ в формате `IOrderResponse`
+
+---
+
+## Слой представления (View)
+
+В приложении реализованы компоненты представления, отвечающие за отображение данных на странице и взаимодействие с пользователем.
+
+### Header
+
+**Назначение класса:**  
+Шапка страницы. Содержит логотип, кнопку корзины и счётчик товаров в корзине.
+
+**Конструктор:**  
+`constructor(container: HTMLElement, events: IEvents)` — принимает контейнер и брокер событий.
+
+#### Поля
+
+- counterElement: HTMLElement — элемент для отображения счётчика товаров
+- basketButton: HTMLElement — кнопка открытия корзины
+
+#### Методы
+
+- set counter(value: number): void — устанавливает значение счётчика товаров в корзине
+
+---
+
+### Gallery
+
+**Назначение класса:**  
+Окно вывода карточек товаров в каталоге.
+
+**Конструктор:**  
+`constructor(container: HTMLElement, events: IEvents)` — принимает контейнер и брокер событий.
+
+#### Поля
+
+- catalogElement: HTMLElement — контейнер для карточек товаров
+
+#### Методы
+
+- set catalog(items: HTMLElement[]): void — принимает массив карточек и отображает их в каталоге
+
+---
+
+### Modal
+
+**Назначение класса:**  
+Модальное окно для отображения различного контента (карточки товара, корзина, формы).
+
+**Конструктор:**  
+`constructor(container: HTMLElement, events: IEvents)` — принимает контейнер и брокер событий.
+
+#### Поля
+
+- modalElement: HTMLElement — корневой элемент модального окна
+- closeButton: HTMLButtonElement — кнопка закрытия модального окна
+
+#### Методы
+
+- set modalContent(content: HTMLElement): void — устанавливает содержимое модального окна
+- open(content: HTMLElement): void — открывает модальное окно с переданным содержимым
+- close(): void — закрывает модальное окно
+
+---
+
+### CardDefault
+
+**Назначение класса:**  
+Абстрактный базовый класс для всех типов карточек товаров.
+
+**Конструктор:**  
+`constructor(container: HTMLElement)` — принимает контейнер карточки.
+
+#### Поля
+
+- title: HTMLElement — элемент для отображения названия товара
+- price: HTMLElement — элемент для отображения цены товара
+
+#### Методы
+
+- set TitleValue(value: string): void — устанавливает название товара
+- set PriceValue(value: number | null): void — устанавливает цену товара (при `null` отображается "Бесценно")
+
+---
+
+### CatalogCard
+
+**Назначение класса:**  
+Карточка товара, отображаемая в каталоге на главной странице.
+
+**Конструктор:**  
+`constructor(container: HTMLElement, events: IEvents)` — принимает контейнер и брокер событий.
+
+#### Поля
+
+- image: HTMLImageElement — изображение товара
+- category: HTMLElement — элемент категории товара
+
+#### Методы
+
+- set categoryValue(value: string): void — устанавливает категорию товара и применяет соответствующий CSS-класс
+- set imageSrc(src: string): void — устанавливает путь к изображению товара
+- showPreview(id: string): void — открывает модальное окно с подробной информацией о товаре
+- render(data: Partial<IProduct>): HTMLElement — отображает данные товара в карточке
+
+---
+
+### PreviewCard
+
+**Назначение класса:**  
+Подробная карточка товара, отображаемая в модальном окне.
+
+**Конструктор:**  
+`constructor(container: HTMLElement, events: IEvents)` — принимает контейнер и брокер событий.
+
+#### Поля
+
+- descriptionElement: HTMLElement — элемент для описания товара
+- cardButton: HTMLButtonElement — кнопка "В корзину" / "Удалить из корзины"
+
+#### Методы
+
+- set description(value: string): void — устанавливает описание товара
+- set buttonText(value: string): void — устанавливает текст кнопки
+- set isButtonDisabled(value: boolean): void — устанавливает состояние кнопки (активна/неактивна)
+- render(data: Partial<IProduct>): HTMLElement — отображает данные товара в подробной карточке
+
+---
+
+### CartCard
+
+**Назначение класса:**  
+Карточка товара, отображаемая в корзине.
+
+**Конструктор:**  
+`constructor(container: HTMLElement, events: IEvents)` — принимает контейнер и брокер событий.
+
+#### Поля
+
+- indexElement: HTMLElement — элемент для отображения порядкового номера товара
+- deleteButton: HTMLButtonElement — кнопка удаления товара из корзины
+
+#### Методы
+
+- set index(value: number): void — устанавливает порядковый номер товара в корзине
+- render(data: Partial<IProduct & { index?: number }>): HTMLElement — отображает данные товара в карточке корзины
+
+---
+
+### Cart (View)
+
+**Назначение класса:**  
+Компонент корзины с добавленными товарами.
+
+**Конструктор:**  
+`constructor(container: HTMLElement, events: IEvents)` — принимает контейнер и брокер событий.
+
+#### Поля
+
+- totalElement: HTMLElement — элемент для отображения общей стоимости
+- toOrderButton: HTMLButtonElement — кнопка оформления заказа
+- cartList: HTMLElement — контейнер для списка товаров
+
+#### Методы
+
+- set isToOrderButtonDisabled(value: boolean): void — устанавливает состояние кнопки оформления заказа
+- set listItems(list: HTMLElement[]): void — устанавливает список карточек товаров (при пустом списке отображается "Корзина пуста")
+- set totalPrice(price: number): void — устанавливает общую стоимость товаров в корзине
+
+---
+
+### Confirmation
+
+**Назначение класса:**  
+Окно подтверждения успешного оформления заказа.
+
+**Конструктор:**  
+`constructor(container: HTMLElement, events: IEvents)` — принимает контейнер и брокер событий.
+
+#### Поля
+
+- totalCostElement: HTMLElement — элемент для отображения суммы заказа
+- closeButton: HTMLButtonElement — кнопка закрытия окна подтверждения
+
+#### Методы
+
+- set total(value: number): void — устанавливает сумму заказа
+
+---
+
+### FormDefault
+
+**Назначение класса:**  
+Абстрактный базовый класс для всех форм.
+
+**Конструктор:**  
+`constructor(container: HTMLElement)` — принимает контейнер формы.
+
+#### Поля
+
+- submitButton: HTMLButtonElement — кнопка отправки формы
+- errorsElement: HTMLElement — элемент для отображения ошибок валидации
+
+#### Методы
+
+- set isButtonDisabled(value: boolean): void — устанавливает состояние кнопки отправки
+- set errorMessage(message: string): void — устанавливает сообщение об ошибке
+
+---
+
+### FormOrder
+
+**Назначение класса:**  
+Форма для выбора способа оплаты и ввода адреса доставки (первый шаг оформления заказа).
+
+**Конструктор:**  
+`constructor(container: HTMLElement, events: IEvents)` — принимает контейнер и брокер событий.
+
+#### Поля
+
+- cashButton: HTMLButtonElement — кнопка выбора оплаты при получении
+- cardButton: HTMLButtonElement — кнопка выбора онлайн-оплаты
+- addressElement: HTMLInputElement — поле ввода адреса доставки
+
+#### Методы
+
+- set payment(value: PaymentType): void — устанавливает выбранный способ оплаты и обновляет визуальное состояние кнопок
+- set address(value: string): void — устанавливает адрес доставки
+
+---
+
+### ContactsForm
+
+**Назначение класса:**  
+Форма ввода контактных данных покупателя (второй шаг оформления заказа).
+
+**Конструктор:**  
+`constructor(container: HTMLElement, events: IEvents)` — принимает контейнер и брокер событий.
+
+#### Поля
+
+- emailElement: HTMLInputElement — поле ввода email
+- phoneElement: HTMLInputElement — поле ввода телефона
+
+#### Методы
+
+- set email(value: string): void — устанавливает email
+- set phone(value: string): void — устанавливает телефон
+
+---
+
+## Описание событий
+
+События на странице отслеживаются с помощью брокера событий (`EventEmitter`) и обрабатываются в презентере (файл `main.ts`).
+
+### События от Моделей данных
+
+Генерируются при изменении данных в моделях:
+
+| Событие | Описание | Данные |
+|---------|----------|--------|
+| `catalog:changed` | Изменение каталога товаров | `{ items: IProduct[] }` |
+| `preview:changed` | Изменение выбранного товара для просмотра | `{ item: IProduct \| null }` |
+| `cart:changed` | Изменение содержимого корзины | — |
+| `customer:changed` | Изменение данных покупателя | `ICustomer` |
+
+### События от Представлений
+
+Генерируются при действиях пользователя:
+
+| Событие | Описание | Данные | Источник |
+|---------|----------|--------|----------|
+| `card:open` | Выбор карточки для просмотра | `{ id: string }` | CatalogCard |
+| `card:button:clicked` | Нажатие кнопки покупки/удаления товара | `{ id: string }` | PreviewCard |
+| `cart:open` | Нажатие кнопки открытия корзины | — | Header |
+| `cart:item:remove` | Нажатие кнопки удаления товара из корзины | `{ id: string }` | CartCard |
+| `order:make` | Нажатие кнопки оформления заказа | — | Cart |
+| `order:data:submit` | Нажатие кнопки перехода ко второй форме | — | FormOrder |
+| `order:confirm` | Нажатие кнопки оплаты/завершения заказа | — | ContactsForm |
+| `order:completed` | Закрытие окна успешного заказа | — | Confirmation |
+| `payment:chosen` | Выбор способа оплаты | `{ payment: 'online' \| 'cash' }` | FormOrder |
+| `address:input` | Изменение адреса доставки | `{ address: string }` | FormOrder |
+| `email:input` | Изменение email | `{ email: string }` | ContactsForm |
+| `phone:input` | Изменение телефона | `{ phone: string }` | ContactsForm |
+| `modal:close` | Закрытие модального окна | — | Modal |
+
+---
+
+## Презентер
+
+Презентер реализован в файле `main.ts` и отвечает за связь между слоями Model и View.
+
+**Принцип работы:**
+- Презентер **не генерирует** события, только обрабатывает их
+- Перерисовка View происходит только при:
+  - событии от Model об изменении данных
+  - открытии модального окна
+
+**Основные обязанности:**
+1. Инициализация моделей и представлений
+2. Загрузка данных с сервера
+3. Обработка событий от моделей (изменение данных)
+4. Обработка событий от представлений (действия пользователя)
+5. Подготовка данных для передачи между слоями
+6. Валидация форм оформления заказа
