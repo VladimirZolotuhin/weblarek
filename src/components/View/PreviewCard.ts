@@ -1,5 +1,4 @@
 import { CardDefault } from './CardDefault'
-import { IEvents } from '../base/Events'
 import { IProduct } from '../../types'
 import { ensureElement } from '../../utils/utils'
 import { CDN_URL } from '../../utils/constants'
@@ -8,17 +7,18 @@ import { categoryMap } from '../../utils/constants'
 export class PreviewCard extends CardDefault {
   protected descriptionElement: HTMLElement
   protected cardButton: HTMLButtonElement
+  protected imageElement: HTMLImageElement
+  protected categoryElement: HTMLElement
 
-  constructor(container: HTMLElement, protected events: IEvents) {
+  constructor(container: HTMLElement, protected onButtonClick: () => void) {
     super(container)
     this.descriptionElement = ensureElement<HTMLElement>('.card__text', container)
     this.cardButton = ensureElement<HTMLButtonElement>('.card__button', container)
+    this.imageElement = ensureElement<HTMLImageElement>('.card__image', container)
+    this.categoryElement = ensureElement<HTMLElement>('.card__category', container)
     
     this.cardButton.addEventListener('click', () => {
-      const productId = container.dataset.id
-      if (productId) {
-        events.emit('card:button:clicked', { id: productId })
-      }
+      this.onButtonClick()
     })
   }
 
@@ -34,28 +34,31 @@ export class PreviewCard extends CardDefault {
     this.cardButton.disabled = value
   }
 
+  set imageSrc(src: string) {
+    this.setImage(this.imageElement, CDN_URL + src, this.title.textContent || '')
+  }
+
+  set categoryValue(value: string) {
+    this.categoryElement.textContent = value
+    const categoryClass = categoryMap[value as keyof typeof categoryMap] || 'card__category_other'
+    this.categoryElement.className = `card__category ${categoryClass}`
+  }
+
   render(data: Partial<IProduct>): HTMLElement {
-    if (data.id) {
-      this.container.dataset.id = data.id
-    }
     if (data.title) {
-      this.TitleValue = data.title
+      this.titleValue = data.title
     }
     if (data.price !== undefined) {
-      this.PriceValue = data.price
+      this.priceValue = data.price
     }
     if (data.description) {
       this.description = data.description
     }
     if (data.image) {
-      const imageElement = ensureElement<HTMLImageElement>('.card__image', this.container)
-      this.setImage(imageElement, CDN_URL + data.image, data.title || '')
+      this.imageSrc = data.image
     }
     if (data.category) {
-      const categoryElement = ensureElement<HTMLElement>('.card__category', this.container)
-      categoryElement.textContent = data.category
-      const categoryClass = categoryMap[data.category as keyof typeof categoryMap] || 'card__category_other'
-      categoryElement.className = `card__category ${categoryClass}`
+      this.categoryValue = data.category
     }
     return this.container
   }

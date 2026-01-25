@@ -16,11 +16,11 @@ export abstract class CardDefault extends Component<ICardData> {
     this.price = ensureElement<HTMLElement>('.card__price', container)
   }
 
-  set TitleValue(value: string) {
+  set titleValue(value: string) {
     this.title.textContent = value
   }
 
-  set PriceValue(value: number | null) {
+  set priceValue(value: number | null) {
     if (value === null) {
       this.price.textContent = 'Бесценно'
     } else {

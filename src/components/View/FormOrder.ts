@@ -15,12 +15,10 @@ export class FormOrder extends FormDefault {
     this.addressElement = ensureElement<HTMLInputElement>('input[name="address"]', container)
     
     this.cashButton.addEventListener('click', () => {
-      this.payment = 'cash'
       events.emit('payment:chosen', { payment: 'cash' })
     })
     
     this.cardButton.addEventListener('click', () => {
-      this.payment = 'online'
       events.emit('payment:chosen', { payment: 'online' })
     })
     

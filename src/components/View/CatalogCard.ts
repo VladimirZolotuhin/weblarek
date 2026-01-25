@@ -1,5 +1,4 @@
 import { CardDefault } from './CardDefault'
-import { IEvents } from '../base/Events'
 import { IProduct } from '../../types'
 import { ensureElement } from '../../utils/utils'
 import { CDN_URL } from '../../utils/constants'
@@ -9,16 +8,13 @@ export class CatalogCard extends CardDefault {
   protected image: HTMLImageElement
   protected category: HTMLElement
 
-  constructor(container: HTMLElement, protected events: IEvents) {
+  constructor(container: HTMLElement, protected onClick: () => void) {
     super(container)
     this.image = ensureElement<HTMLImageElement>('.card__image', container)
     this.category = ensureElement<HTMLElement>('.card__category', container)
     
     container.addEventListener('click', () => {
-      const productId = container.dataset.id
-      if (productId) {
-        events.emit('card:open', { id: productId })
-      }
+      this.onClick()
     })
   }
 
@@ -32,19 +28,12 @@ export class CatalogCard extends CardDefault {
     this.setImage(this.image, CDN_URL + src, this.title.textContent || '')
   }
 
-  showPreview(id: string): void {
-    this.events.emit('card:open', { id })
-  }
-
   render(data: Partial<IProduct>): HTMLElement {
-    if (data.id) {
-      this.container.dataset.id = data.id
-    }
     if (data.title) {
-      this.TitleValue = data.title
+      this.titleValue = data.title
     }
     if (data.price !== undefined) {
-      this.PriceValue = data.price
+      this.priceValue = data.price
     }
     if (data.image) {
       this.imageSrc = data.image

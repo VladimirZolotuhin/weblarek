@@ -10,7 +10,7 @@ import { EventEmitter } from './components/base/Events'
 import { API_URL } from './utils/constants'
 import { cloneTemplate, ensureElement } from './utils/utils'
 
-import { IApi, IProduct, IOrder } from './types'
+import { IProduct, IOrder } from './types'
 
 // View-компоненты
 import { Header } from './components/View/Header'
@@ -33,8 +33,7 @@ const cartModel = new CartModel(events)
 const customerModel = new Customer(events)
 
 // API
-const apiInstance = new Api(API_URL) as unknown as IApi
-const apiService = new ApiService(apiInstance)
+const apiService = new ApiService(new Api(API_URL))
 
 // View-компоненты
 const header = new Header(ensureElement<HTMLElement>('.header'), events)
@@ -50,10 +49,16 @@ const orderTemplate = ensureElement<HTMLTemplateElement>('#order')
 const contactsTemplate = ensureElement<HTMLTemplateElement>('#contacts')
 const successTemplate = ensureElement<HTMLTemplateElement>('#success')
 
+// Текущие формы (для валидации через представления)
+let currentOrderForm: FormOrder | null = null
+let currentContactsForm: ContactsForm | null = null
+
 // изменение каталога товаров
 events.on('catalog:changed', ({ items }: { items: IProduct[] }) => {
   const cards = items.map((product) => {
-    const card = new CatalogCard(cloneTemplate(cardCatalogTemplate), events)
+    const card = new CatalogCard(cloneTemplate(cardCatalogTemplate), () => {
+      events.emit('card:open', { id: product.id })
+    })
     return card.render(product)
   })
   gallery.catalog = cards
@@ -63,7 +68,9 @@ events.on('catalog:changed', ({ items }: { items: IProduct[] }) => {
 events.on('preview:changed', ({ item }: { item: IProduct | null }) => {
   if (!item) return
 
-  const previewCard = new PreviewCard(cloneTemplate(cardPreviewTemplate), events)
+  const previewCard = new PreviewCard(cloneTemplate(cardPreviewTemplate), () => {
+    events.emit('card:button:clicked', { id: item.id })
+  })
   previewCard.render(item)
 
   const isInCart = cartModel.isAvailable(item.id)
@@ -78,16 +85,15 @@ events.on('preview:changed', ({ item }: { item: IProduct | null }) => {
   modal.open(previewCard.render({}))
 })
 
-//  изменение содержимого корзины
+// изменение содержимого корзины
 events.on('cart:changed', () => {
   header.counter = cartModel.getAmountOfItems()
 })
 
-// : изменение данных покупателя (валидация форм)
+// изменение данных покупателя (валидация форм)
 events.on('customer:changed', () => {
   // Валидация будет выполнена при открытии форм
 })
-
 
 // выбор карточки для просмотра
 events.on('card:open', ({ id }: { id: string }) => {
@@ -130,10 +136,13 @@ events.on('order:make', () => {
 // выбор способа оплаты
 events.on('payment:chosen', ({ payment }: { payment: 'online' | 'cash' }) => {
   customerModel.setCustomerInfo({ payment })
-  validateOrderForm()
+  if (currentOrderForm) {
+    currentOrderForm.payment = payment
+    validateOrderForm()
+  }
 })
 
-//  изменение адреса доставки
+// изменение адреса доставки
 events.on('address:input', ({ address }: { address: string }) => {
   customerModel.setCustomerInfo({ address })
   validateOrderForm()
@@ -199,6 +208,8 @@ events.on('order:completed', () => {
 // закрытие модального окна
 events.on('modal:close', () => {
   productModel.setSelectedItem(null)
+  currentOrderForm = null
+  currentContactsForm = null
 })
 
 // ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ РЕНДЕРИНГА
@@ -212,7 +223,9 @@ function renderCart(): void {
     cartView.isToOrderButtonDisabled = true
   } else {
     const cartCards = items.map((product, index) => {
-      const card = new CartCard(cloneTemplate(cardBasketTemplate), events)
+      const card = new CartCard(cloneTemplate(cardBasketTemplate), () => {
+        events.emit('cart:item:remove', { id: product.id })
+      })
       return card.render({ ...product, index: index + 1 })
     })
     cartView.listItems = cartCards
@@ -224,74 +237,64 @@ function renderCart(): void {
 }
 
 function renderOrderForm(): void {
-  const formOrder = new FormOrder(cloneTemplate(orderTemplate), events)
+  currentOrderForm = new FormOrder(cloneTemplate(orderTemplate), events)
 
   const customerData = customerModel.getCustomerInfo()
   if (customerData.payment) {
-    formOrder.payment = customerData.payment
+    currentOrderForm.payment = customerData.payment
   }
   if (customerData.address) {
-    formOrder.address = customerData.address
+    currentOrderForm.address = customerData.address
   }
 
   validateOrderForm()
-  modal.open(formOrder.render())
+  modal.open(currentOrderForm.render())
 }
 
 function renderContactsForm(): void {
-  const contactsForm = new ContactsForm(cloneTemplate(contactsTemplate), events)
+  currentContactsForm = new ContactsForm(cloneTemplate(contactsTemplate), events)
 
   const customerData = customerModel.getCustomerInfo()
   if (customerData.email) {
-    contactsForm.email = customerData.email
+    currentContactsForm.email = customerData.email
   }
   if (customerData.phone) {
-    contactsForm.phone = customerData.phone
+    currentContactsForm.phone = customerData.phone
   }
 
   validateContactsForm()
-  modal.open(contactsForm.render())
+  modal.open(currentContactsForm.render())
 }
 
 function validateOrderForm(): void {
+  if (!currentOrderForm) return
+  
   const errors = customerModel.validate()
   const paymentError = errors.payment
   const addressError = errors.address
 
-  const contentContainer = document.querySelector('.modal__content')
-  const formOrder = contentContainer?.querySelector('.form')
-  if (formOrder) {
-    const errorElement = formOrder.querySelector('.form__errors') as HTMLElement
-    const submitButton = formOrder.querySelector('button[type="submit"]') as HTMLButtonElement
-    
-    if (paymentError || addressError) {
-      errorElement.textContent = [paymentError, addressError].filter(Boolean).join(', ')
-      submitButton.disabled = true
-    } else {
-      errorElement.textContent = ''
-      submitButton.disabled = false
-    }
+  if (paymentError || addressError) {
+    currentOrderForm.errorMessage = [paymentError, addressError].filter(Boolean).join(', ')
+    currentOrderForm.isButtonDisabled = true
+  } else {
+    currentOrderForm.errorMessage = ''
+    currentOrderForm.isButtonDisabled = false
   }
 }
 
 function validateContactsForm(): void {
+  if (!currentContactsForm) return
+  
   const errors = customerModel.validate()
   const emailError = errors.email
   const phoneError = errors.phone
 
-  const contentContainer = document.querySelector('.modal__content')
-  const contactsForm = contentContainer?.querySelector('.form')
-  if (contactsForm) {
-    const errorElement = contactsForm.querySelector('.form__errors') as HTMLElement
-    const submitButton = contactsForm.querySelector('button[type="submit"]') as HTMLButtonElement
-    
-    if (emailError || phoneError) {
-      errorElement.textContent = [emailError, phoneError].filter(Boolean).join(', ')
-      submitButton.disabled = true
-    } else {
-      errorElement.textContent = ''
-      submitButton.disabled = false
-    }
+  if (emailError || phoneError) {
+    currentContactsForm.errorMessage = [emailError, phoneError].filter(Boolean).join(', ')
+    currentContactsForm.isButtonDisabled = true
+  } else {
+    currentContactsForm.errorMessage = ''
+    currentContactsForm.isButtonDisabled = false
   }
 }
 

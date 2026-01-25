@@ -1,9 +1,10 @@
-import type { IApi, IOrder, IOrderResponse, IProduct } from '../../types'
+import type { IOrder, IOrderResponse, IProduct } from '../../types'
+import { Api } from '../base/Api'
 
 export class ApiService {
-  private api: IApi
+  private api: Api
 
-  constructor(api: IApi) {
+  constructor(api: Api) {
     this.api = api
   }
 

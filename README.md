@@ -307,8 +307,8 @@ private customerInfo: ICustomer = {
 
 #### Методы
 
-- set TitleValue(value: string): void — устанавливает название товара
-- set PriceValue(value: number | null): void — устанавливает цену товара (при `null` отображается "Бесценно")
+- set titleValue(value: string): void — устанавливает название товара
+- set priceValue(value: number | null): void — устанавливает цену товара (при `null` отображается "Бесценно")
 
 ---
 
@@ -318,7 +318,7 @@ private customerInfo: ICustomer = {
 Карточка товара, отображаемая в каталоге на главной странице.
 
 **Конструктор:**  
-`constructor(container: HTMLElement, events: IEvents)` — принимает контейнер и брокер событий.
+`constructor(container: HTMLElement, onClick: () => void)` — принимает контейнер и callback, вызываемый при клике на карточку.
 
 #### Поля
 
@@ -329,7 +329,6 @@ private customerInfo: ICustomer = {
 
 - set categoryValue(value: string): void — устанавливает категорию товара и применяет соответствующий CSS-класс
 - set imageSrc(src: string): void — устанавливает путь к изображению товара
-- showPreview(id: string): void — открывает модальное окно с подробной информацией о товаре
 - render(data: Partial<IProduct>): HTMLElement — отображает данные товара в карточке
 
 ---
@@ -340,18 +339,22 @@ private customerInfo: ICustomer = {
 Подробная карточка товара, отображаемая в модальном окне.
 
 **Конструктор:**  
-`constructor(container: HTMLElement, events: IEvents)` — принимает контейнер и брокер событий.
+`constructor(container: HTMLElement, onButtonClick: () => void)` — принимает контейнер и callback, вызываемый при клике на кнопку.
 
 #### Поля
 
 - descriptionElement: HTMLElement — элемент для описания товара
 - cardButton: HTMLButtonElement — кнопка "В корзину" / "Удалить из корзины"
+- imageElement: HTMLImageElement — изображение товара
+- categoryElement: HTMLElement — элемент категории товара
 
 #### Методы
 
 - set description(value: string): void — устанавливает описание товара
 - set buttonText(value: string): void — устанавливает текст кнопки
 - set isButtonDisabled(value: boolean): void — устанавливает состояние кнопки (активна/неактивна)
+- set imageSrc(src: string): void — устанавливает путь к изображению товара
+- set categoryValue(value: string): void — устанавливает категорию товара
 - render(data: Partial<IProduct>): HTMLElement — отображает данные товара в подробной карточке
 
 ---
@@ -362,7 +365,7 @@ private customerInfo: ICustomer = {
 Карточка товара, отображаемая в корзине.
 
 **Конструктор:**  
-`constructor(container: HTMLElement, events: IEvents)` — принимает контейнер и брокер событий.
+`constructor(container: HTMLElement, onDelete: () => void)` — принимает контейнер и callback, вызываемый при удалении товара.
 
 #### Поля
 
